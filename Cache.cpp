@@ -9,7 +9,7 @@ Data* Cache::read(int addr) {
 }
 Elem* Cache::put(int addr, Data* cont) {
     Elem* temp = new Elem(addr, cont, true);
-    if (q->size <= 15) {
+    if (q->size < 15) {
         enqueue(q, temp);
         root = insert(root, addr, cont, true);
     }
@@ -37,6 +37,7 @@ Elem* Cache::write(int addr, Data* cont) {
         replace(root, addr, cont);
         for (int i = q->front; i <= q->rear; i++) {
             if (q->array[i]->addr == addr) {
+                //free(q->array[i]->data);
                 q->array[i]->data = cont;
                 q->array[i]->sync = false;
             }
@@ -46,7 +47,7 @@ Elem* Cache::write(int addr, Data* cont) {
     if (!found) {
       //  arr[p++] = new Elem(addr,cont,false);
         Elem* temp = new Elem(addr, cont, false);
-        if (q->size <= 15) {
+        if (q->size < 15) {
             enqueue(q, temp);
             root = insert(root, addr, cont, false);
         }

@@ -9,6 +9,11 @@ public:
 	Node* right;
 	int height;
 	Elem* elem = new Elem(0, 0, false);
+	~Node() {
+		left = NULL;
+		right = NULL;
+		delete elem;
+	}
 };
 
 int max(int a, int b) {
@@ -104,6 +109,18 @@ Node* insert(Node* node, int key, Data* cont, bool s) {
 	return node;
 }
 
+void deleteTree(Node* node)
+{
+	if (node == NULL) return;
+
+	/* first delete both subtrees */
+	deleteTree(node->left);
+	deleteTree(node->right);
+
+	/* then delete the node */
+	delete node;
+}
+
 bool search(Node* node, int addr) {
 	if (node != NULL) {
 		if (node->elem->addr == addr) {
@@ -137,6 +154,7 @@ Data* getData(Node* node, int addr) {
 void replace(Node* node, int addr, Data* data) {
 	if (node != NULL) {
 		if (node->elem->addr == addr) {
+			free(node->elem->data);
 			node->elem->data = data;
 			node->elem->sync = false;
 		}
@@ -180,8 +198,7 @@ Node* deleteNode(Node* root, int key) {
 			else {
 				*root = *temp;
 			}
-			delete(temp->elem);
-			delete(temp);
+			free(temp);
 		}
 		else {
 			Node* temp = minValueNode(root->right);
@@ -227,22 +244,26 @@ void inOrder(Node* root) {
 class Queue {
 public:
 	int front, rear, size;
-	unsigned capacity;
 	Elem** array;
+	~Queue() {
+		for (int i = front; i <= rear; i++) {
+			array[i] = NULL;
+		}
+		delete[] array;
+	}
 };
 
 // function to create a queue
 // of given capacity.
 // It initializes size of queue as 0
-Queue* createQueue(unsigned capacity)
+Queue* createQueue()
 {
 	Queue* queue = new Queue();
-	queue->capacity = capacity;
 	queue->front = queue->size = 0;
 
 	// This is important, see the enqueue
-	queue->rear = capacity - 1;
-	queue->array = new Elem * [queue->capacity];
+	queue->rear = -1;
+	queue->array = new Elem * [65536];
 	return queue;
 }
 
@@ -250,7 +271,7 @@ Queue* createQueue(unsigned capacity)
 // becomes equal to the capacity
 int isFull(Queue* queue)
 {
-	return (queue->size == queue->capacity);
+	return (queue->size == 15);
 }
 
 // Queue is empty when size is 0
@@ -265,8 +286,7 @@ void enqueue(Queue* queue, Elem* item)
 {
 	if (isFull(queue))
 		return;
-	queue->rear = (queue->rear + 1)
-		% queue->capacity;
+	queue->rear = queue->rear + 1;
 	queue->array[queue->rear] = item;
 	queue->size = queue->size + 1;
 }
@@ -278,8 +298,7 @@ Elem* dequeue(Queue* queue)
 	if (isEmpty(queue))
 		return NULL;
 	Elem* item = queue->array[queue->front];
-	queue->front = (queue->front + 1)
-		% queue->capacity;
+	queue->front = (queue->front + 1);
 	queue->size = queue->size - 1;
 	return item;
 }
@@ -306,13 +325,13 @@ class Cache {
 		Node* root;
 	public:
 		Cache(int s) {
-			q = createQueue(MAXSIZE); 
+			q = createQueue(); 
 			p = 0;
 			root = NULL;
 		}
 		~Cache() {
-			delete[] q;
-			delete[] root;
+			delete q;
+			deleteTree(root);
 		}
 		Data* read(int addr);
 		Elem* put(int addr, Data* cont);
